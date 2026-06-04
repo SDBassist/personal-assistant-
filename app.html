@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PA">
+    <title>Personal Assistant</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background: #1e293b;
+            padding: 1rem;
+            border-bottom: 1px solid #334155;
+            flex-shrink: 0;
+        }
+
+        .header-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .header-date { font-size: 0.75rem; color: #94a3b8; }
+
+        .tabs {
+            display: flex;
+            gap: 0;
+            background: #1e293b;
+            border-bottom: 1px solid #334155;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tab {
+            flex: 1;
+            min-width: 100px;
+            padding: 0.75rem;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #06b6d4;
+            border-bottom-color: #06b6d4;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 1rem;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #06b6d4;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat {
+            background: #0f172a;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #06b6d4;
+        }
+
+        .progress {
+            height: 8px;
+            background: #0f172a;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.75rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #3b82f6);
+            transition: width 0.3s;
+        }
+
+        .module {
+            background: #0f172a;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.375rem;
+            border: 1px solid #334155;
+        }
+
+        .module-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .module-meta {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-progress {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-align: center;
+            padding: 0.5rem 0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            margin: 0.5rem 0;
+            accent-color: #06b6d4;
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: #0f172a;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #334155;
+        }
+
+        .task.done {
+            opacity: 0.6;
+        }
+
+        .task-check {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #06b6d4;
+            flex-shrink: 0;
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .task.done .task-title {
+            text-decoration: line-through;
+            color: #64748b;
+        }
+
+        .task-date {
+            font-size: 0.7rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .category {
+            margin-bottom: 1.5rem;
+        }
+
+        .category-title {
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        input, select {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #e2e8f0;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.85rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #06b6d4;
+        }
+
+        button {
+            background: linear-gradient(90deg, #06b6d4, #3b82f6);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            width: 100%;
+            transition: opacity 0.2s;
+        }
+
+        button:active { opacity: 0.8; }
+
+        .income-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #0f172a;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            border: 1px solid #334155;
+        }
+
+        .entry-info {
+            flex: 1;
+        }
+
+        .entry-source {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .entry-date {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 0.2rem;
+        }
+
+        .entry-amount {
+            font-weight: bold;
+            color: #06b6d4;
+            margin-right: 0.5rem;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+        }
+
+        .info-box {
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid #06b6d4;
+            border-radius: 0.375rem;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            color: #06b6d4;
+            margin-top: 1rem;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #94a3b8;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-title">📚 Personal Assistant</div>
+            <div class="header-date">Stefano • June 4, 2026</div>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('atx')">ATX Exam</button>
+            <button class="tab" onclick="showTab('book')">Book</button>
+            <button class="tab" onclick="showTab('income')">Income</button>
+        </div>
+
+        <div class="content">
+            <!-- ATX Tab -->
+            <div id="atx" class="section active">
+                <div class="card">
+                    <div class="card-title">Timeline</div>
+                    <div class="stat-grid">
+                        <div class="stat"><div class="stat-label">Start</div><div class="stat-value">Jul 13</div></div>
+                        <div class="stat"><div class="stat-label">Weeks</div><div class="stat-value">9</div></div>
+                        <div class="stat"><div class="stat-label">Hours</div><div class="stat-value">~92</div></div>
+                        <div class="stat"><div class="stat-label">Exam</div><div class="stat-value">Sep 7</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Progress: <span id="atxPercent">0</span>%</div>
+                    <div class="progress">
+                        <div class="progress-fill" id="atxProgressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="atxModules"></div>
+            </div>
+
+            <!-- Book Tab -->
+            <div id="book" class="section">
+                <div class="card">
+                    <div class="card-title">Book Project: <span id="bookPercent">0</span>%</div>
+                    <div class="progress">
+                        <div class="progress-fill" id="bookProgressFill" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div id="bookTasks"></div>
+            </div>
+
+            <!-- Income Tab -->
+            <div id="income" class="section">
+                <div class="card">
+                    <div class="card-title">Total: £<span id="incomeTotal">0.00</span></div>
+                    <div class="stat-grid">
+                        <div class="stat"><div class="stat-label">Entries</div><div class="stat-value" id="incomeCount">0</div></div>
+                        <div class="stat"><div class="stat-label">Streams</div><div class="stat-value">2</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">Log Income</div>
+                    <div class="input-row">
+                        <select id="incomeSource">
+                            <option value="bookkeeping">Bookkeeping</option>
+                            <option value="video">Faceless Video</option>
+                        </select>
+                        <input type="number" id="incomeAmount" placeholder="Amount £" step="0.01" min="0">
+                    </div>
+                    <input type="date" id="incomeDate" style="grid-column: 1/-1; width: 100%;">
+                    <button onclick="addIncome()" style="margin-top: 0.5rem;">+ Log Entry</button>
+                </div>
+
+                <div id="incomeEntries"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Date
+        document.getElementById('incomeDate').valueAsDate = new Date();
+
+        // ATX Modules Data
+        const atxModules = [
+            { id: 'income-tax', name: 'Income Tax (Advanced)', hours: 12 },
+            { id: 'corp-tax', name: 'Corporation Tax', hours: 14 },
+            { id: 'cgt', name: 'Capital Gains Tax', hours: 10 },
+            { id: 'iht', name: 'Inheritance Tax', hours: 10 },
+            { id: 'trusts', name: 'Trusts & Estates', hours: 11 },
+            { id: 'intl-tax', name: 'International Tax', hours: 9 },
+            { id: 'vat', name: 'VAT & Stamp Taxes', hours: 8 },
+            { id: 'tax-planning', name: 'Tax Planning', hours: 8 }
+        ];
+
+        const bookTasks = [
+            { id: 1, task: 'Final cover file', cat: 'Cover' },
+            { id: 2, task: 'Finalize author bio', cat: 'Metadata' },
+            { id: 3, task: 'Set up KDP account', cat: 'KDP' },
+            { id: 4, task: 'Create book description', cat: 'KDP' },
+            { id: 5, task: 'Upload manuscript', cat: 'KDP' },
+            { id: 6, task: 'Upload cover', cat: 'KDP' },
+            { id: 7, task: 'Set pricing', cat: 'KDP' },
+            { id: 8, task: 'Review proof copy', cat: 'KDP' },
+            { id: 9, task: 'Create marketing plan', cat: 'Marketing' },
+            { id: 10, task: 'Draft social posts', cat: 'Marketing' },
+            { id: 11, task: 'Set launch date', cat: 'KDP' },
+            { id: 12, task: 'Publish & market', cat: 'Marketing' }
+        ];
+
+        // Load Data
+        function loadData() {
+            const atx = JSON.parse(localStorage.getItem('atx') || '{}');
+            const book = JSON.parse(localStorage.getItem('book') || '{}');
+            const income = JSON.parse(localStorage.getItem('income') || '[]');
+
+            renderATX(atx);
+            renderBook(book);
+            renderIncome(income);
+        }
+
+        function renderATX(atx) {
+            const html = atxModules.map(m => {
+                const progress = atx[m.id] || 0;
+                return `
+                    <div class="module">
+                        <div class="module-name">${m.name}</div>
+                        <div class="module-meta">${m.hours}h</div>
+                        <input type="range" min="0" max="100" value="${progress}" 
+                            onchange="updateATX('${m.id}', this.value)">
+                        <div class="module-progress">${progress}%</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('atxModules').innerHTML = html;
+            updateATXProgress(atx);
+        }
+
+        function updateATX(id, value) {
+            const atx = JSON.parse(localStorage.getItem('atx') || '{}');
+            atx[id] = parseInt(value);
+            localStorage.setItem('atx', JSON.stringify(atx));
+            renderATX(atx);
+        }
+
+        function updateATXProgress(atx) {
+            const avg = Object.values(atx).reduce((a, b) => a + b, 0) / atxModules.length || 0;
+            const percent = Math.round(avg);
+            document.getElementById('atxPercent').textContent = percent;
+            document.getElementById('atxProgressFill').style.width = percent + '%';
+        }
+
+        function renderBook(book) {
+            const completed = Object.values(book).filter(v => v).length;
+            const total = bookTasks.length;
+            const percent = Math.round((completed / total) * 100);
+
+            document.getElementById('bookPercent').textContent = percent;
+            document.getElementById('bookProgressFill').style.width = percent + '%';
+
+            const categories = [...new Set(bookTasks.map(t => t.cat))];
+            const html = categories.map(cat => {
+                const tasks = bookTasks.filter(t => t.cat === cat);
+                return `
+                    <div class="category">
+                        <div class="category-title">${cat}</div>
+                        ${tasks.map(t => `
+                            <div class="task ${book[t.id] ? 'done' : ''}">
+                                <input type="checkbox" class="task-check" ${book[t.id] ? 'checked' : ''} 
+                                    onchange="updateBook(${t.id}, this.checked)">
+                                <div class="task-content">
+                                    <div class="task-title">${t.task}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('bookTasks').innerHTML = html;
+        }
+
+        function updateBook(id, checked) {
+            const book = JSON.parse(localStorage.getItem('book') || '{}');
+            book[id] = checked;
+            localStorage.setItem('book', JSON.stringify(book));
+            renderBook(book);
+        }
+
+        function renderIncome(income) {
+            const total = income.reduce((a, e) => a + e.amount, 0);
+            document.getElementById('incomeTotal').textContent = total.toFixed(2);
+            document.getElementById('incomeCount').textContent = income.length;
+
+            const html = income.length === 0 ? '<div class="empty">No entries yet</div>' :
+                income.slice().reverse().map((e, i) => `
+                    <div class="income-entry">
+                        <div class="entry-info">
+                            <div class="entry-source">${e.source === 'bookkeeping' ? '📊 Bookkeeping' : '🎬 Video'}</div>
+                            <div class="entry-date">${new Date(e.date).toLocaleDateString()}</div>
+                        </div>
+                        <div class="entry-amount">£${e.amount.toFixed(2)}</div>
+                        <button class="delete-btn" onclick="deleteIncome(${income.length - 1 - i})">🗑️</button>
+                    </div>
+                `).join('');
+            document.getElementById('incomeEntries').innerHTML = html;
+        }
+
+        function addIncome() {
+            const source = document.getElementById('incomeSource').value;
+            const amount = parseFloat(document.getElementById('incomeAmount').value);
+            const date = document.getElementById('incomeDate').value;
+
+            if (amount > 0) {
+                const income = JSON.parse(localStorage.getItem('income') || '[]');
+                income.push({ source, amount, date });
+                localStorage.setItem('income', JSON.stringify(income));
+                document.getElementById('incomeAmount').value = '';
+                renderIncome(income);
+            }
+        }
+
+        function deleteIncome(i) {
+            const income = JSON.parse(localStorage.getItem('income') || '[]');
+            income.splice(i, 1);
+            localStorage.setItem('income', JSON.stringify(income));
+            renderIncome(income);
+        }
+
+        function showTab(tab) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Load on startup
+        loadData();
+    </script>
+</body>
+</html>
